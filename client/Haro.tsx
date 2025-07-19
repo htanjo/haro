@@ -1,10 +1,12 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import SpeechRecognition, {
   useSpeechRecognition,
 } from "react-speech-recognition";
 import "./Haro.css";
+import axios from "axios";
+import useVoices from "./use-voices";
 
-const SILENCE_TIMEOUT = 3000; // 3 seconds
+const SILENCE_TIMEOUT = 2000; // 2 seconds
 
 function Haro() {
   const {
@@ -16,6 +18,37 @@ function Haro() {
   const [messages, setMessages] = useState<string[]>([]);
   const silenceTimer = useRef<NodeJS.Timeout | null>(null);
   const lastTranscript = useRef<string>("");
+  const voices = useVoices();
+
+  const speakMessage = useCallback(
+    (content: string) => {
+      const utterance = new SpeechSynthesisUtterance(content);
+      utterance.lang = "ja-JP"; // Set language to Japanese
+      utterance.voice =
+        voices.find((voice) => voice.name.includes("Microsoft Sayaka")) ||
+        voices.find((voice) => voice.lang === "ja-JP") ||
+        voices[0]; // Fallback to the first available voice
+      utterance.pitch = 2;
+      utterance.rate = 1.5;
+      speechSynthesis.speak(utterance);
+    },
+    [voices]
+  );
+
+  const sendMessage = useCallback(
+    async (content: string) => {
+      try {
+        const response = await axios.post("/api/haro", { content });
+        const data = response.data;
+        if (data && data.content) {
+          speakMessage(data.content);
+        }
+      } catch (error) {
+        console.error("Error sending message:", error);
+      }
+    },
+    [speakMessage]
+  );
 
   useEffect(() => {
     if (transcript === "") return;
@@ -23,16 +56,16 @@ function Haro() {
     if (silenceTimer.current) {
       clearTimeout(silenceTimer.current);
     }
-    silenceTimer.current = setTimeout(() => {
+    silenceTimer.current = setTimeout(async () => {
       const newMessage = transcript.trim();
       if (newMessage && newMessage !== lastTranscript.current) {
         lastTranscript.current = newMessage;
-        console.log("New message:", newMessage);
-        setMessages((prevMessages) => [...prevMessages, newMessage]);
+        sendMessage(newMessage);
+        await setMessages((prevMessages) => [...prevMessages, newMessage]);
         resetTranscript(); // Clear the transcript after processing
       }
     }, SILENCE_TIMEOUT);
-  }, [transcript, resetTranscript]);
+  }, [transcript, sendMessage, resetTranscript]);
 
   if (!browserSupportsSpeechRecognition) {
     return (
