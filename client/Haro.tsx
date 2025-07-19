@@ -6,7 +6,7 @@ import "./Haro.css";
 import axios from "axios";
 import useVoices from "./use-voices";
 
-const SILENCE_TIMEOUT = 2000; // 2 seconds
+const SILENCE_TIMEOUT = 1000; // 2 seconds
 
 function Haro() {
   const {
@@ -22,6 +22,7 @@ function Haro() {
 
   const speakMessage = useCallback(
     (content: string) => {
+      SpeechRecognition.stopListening(); // Stop listening to avoid conflicts with speech synthesis.
       const utterance = new SpeechSynthesisUtterance(content);
       utterance.lang = "ja-JP"; // Set language to Japanese
       utterance.voice =
@@ -30,6 +31,9 @@ function Haro() {
         voices[0]; // Fallback to the first available voice
       utterance.pitch = 2;
       utterance.rate = 1.5;
+      utterance.onend = () => {
+        SpeechRecognition.startListening({ continuous: true }); // Restart listening after speaking.
+      };
       speechSynthesis.speak(utterance);
     },
     [voices]
@@ -67,6 +71,10 @@ function Haro() {
     }, SILENCE_TIMEOUT);
   }, [transcript, sendMessage, resetTranscript]);
 
+  useEffect(() => {
+    console.log("Messages updated:", messages);
+  }, [messages]);
+
   if (!browserSupportsSpeechRecognition) {
     return (
       <div className="haro">
@@ -96,11 +104,11 @@ function Haro() {
           </button>
         )}
       </div>
-      <div>
+      {/* <div>
         {messages.map((message, index) => (
           <div key={index}>{message}</div>
         ))}
-      </div>
+      </div> */}
     </div>
   );
 }
