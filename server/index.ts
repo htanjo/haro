@@ -48,16 +48,23 @@ app.post(
     if (historyContents.length > 10) {
       historyContents.splice(0, historyContents.length - 10);
     }
-    // Generate response using Gemini AI.
-    const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash-lite",
-      contents: historyContents,
-    });
-    historyContents.push({
-      role: "model",
-      parts: [{ text: response.text }],
-    });
-    res.json({ content: response.text });
+    let responseText: string = "";
+    try {
+      // Generate response using Gemini AI.
+      const response = await ai.models.generateContent({
+        model: "gemini-2.0-flash-lite",
+        contents: historyContents,
+      });
+      responseText = response.text || "";
+      historyContents.push({
+        role: "model",
+        parts: [{ text: responseText }],
+      });
+    } catch (error) {
+      console.error("Error generating response:", error);
+      responseText = "ハロ、疲れちゃった。また後で話そうね！";
+    }
+    res.json({ content: responseText });
   })
 );
 
