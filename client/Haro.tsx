@@ -66,18 +66,17 @@ function Haro() {
     [speak]
   );
 
-  const getEvent = useCallback(async () => {
+  const triggerEvent = useCallback(async () => {
     try {
       const response = await axios.post("/api/event");
       const data = response.data;
       if (data && data.content) {
-        return data.content;
+        speak(data.content);
       }
     } catch (error) {
-      console.error("Error getting event:", error);
-      return "最近の面白い出来事を教えて";
+      console.error("Error triggering event:", error);
     }
-  }, []);
+  }, [speak]);
 
   // Schedule a random message event when Haro is active.
   const scheduleEvent = useCallback(async () => {
@@ -87,24 +86,14 @@ function Haro() {
       const delay = Math.floor(Math.random() * (max - min)) + min;
       const id = setTimeout(async () => {
         if (haroActive && !speaking) {
-          const eventResponse = await getEvent();
-          const eventContent = [
-            eventResponse,
-            " 【指示】これはハロの自律的な発言を促すためのメッセージです。",
-            "入力メッセージを元にハロが自分から話しかけているようにしてください。",
-            "唐突な発言にならないよう、最初に何をするのか説明するなど、自然な流れを作ってください。",
-            "例: 入力メッセージ「今日のニュースを教えて」→ 応答メッセージ「今日のニュースを教えるね。ジオン軍が新しいモビルスーツを開発したみたい。どんなものか気になるね！」",
-            "今回は少し長目の回答でも構いません。50文字以内で話してください。",
-          ].join("\n");
-          console.log("Random message event triggered:", eventContent);
-          sendMessage(eventContent);
+          await triggerEvent();
         }
         scheduleNext();
       }, delay);
       setRandomSpeakTimer(id);
     };
     scheduleNext();
-  }, [haroActive, speaking, sendMessage, getEvent]);
+  }, [haroActive, speaking, triggerEvent]);
 
   // Cleanup the random message event timer when Haro is not active or speaking.
   const cleanupEvent = useCallback(() => {
