@@ -122,13 +122,19 @@ function Haro() {
   // Trigger a message event randomly.
   useEffect(() => {
     const scheduleNext = () => {
-      const min = 15000; // 15 seconds
-      const max = 60000; // 60 seconds
+      const min = 5000; // 15 seconds
+      const max = 20000; // 60 seconds
       const delay = Math.floor(Math.random() * (max - min)) + min;
       const id = setTimeout(async () => {
         if (haroActive && !speaking) {
           const eventResponse = await getEvent();
-          const eventContent = `${eventResponse}\n【指示】今回は少し長目でも構いません。50文字以内で話してください。また、何があったのかも簡単に説明してください。`;
+          const eventContent = [
+            eventResponse,
+            " 【指示】これはハロの周りで起きたイベントのメッセージです。",
+            "最初に必ず何があったのか復唱し、ハロらしいリアクションをしてください。",
+            "例: 入力メッセージ「フラウがクッキーくれた！」→ 応答メッセージ「フラウがクッキーをくれたよ！わーい！とっても美味しそう！」",
+            "今回は少し長目の回答でも構いません。50文字以内で話してください。",
+          ].join("\n");
           console.log("Random message event triggered:", eventContent);
           sendMessage(eventContent);
         }
