@@ -10,6 +10,7 @@ const port = 3000;
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
 });
+const geminiModel = "gemini-2.0-flash-lite";
 const historyContents: Content[] = [
   {
     role: "user",
@@ -56,7 +57,7 @@ app.post(
     try {
       // Generate response using Gemini AI.
       const response = await ai.models.generateContent({
-        model: "gemini-2.0-flash-lite",
+        model: geminiModel,
         contents: historyContents,
       });
       responseText = response.text || "";
@@ -83,7 +84,7 @@ app.post(
       }
       // Generate response using Gemini AI.
       const response = await ai.models.generateContent({
-        model: "gemini-2.0-flash-lite",
+        model: geminiModel,
         contents: [
           {
             role: "user",
