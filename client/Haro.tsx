@@ -15,12 +15,12 @@ function Haro() {
     useSpeechRecognition();
   const [messages, setMessages] = useState<string[]>([]);
   const [haroActive, setHaroActive] = useState(false);
-  const [prevHaroActive, setPrevHaroActive] = useState(false);
   const [speaking, setSpeaking] = useState(false);
   const [randomSpeakTimer, setRandomSpeakTimer] =
     useState<NodeJS.Timeout | null>(null);
   const silenceTimer = useRef<NodeJS.Timeout | null>(null);
   const lastTranscript = useRef<string>("");
+  const haroActiveRef = useRef(haroActive);
   const voices = useVoices();
 
   const speak = useCallback(
@@ -39,7 +39,7 @@ function Haro() {
       };
       utterance.onend = () => {
         setSpeaking(false);
-        if (haroActive) {
+        if (haroActiveRef.current) {
           SpeechRecognition.startListening({ continuous: true }); // Restart listening after speaking.
         }
       };
@@ -48,7 +48,7 @@ function Haro() {
       };
       speechSynthesis.speak(utterance);
     },
-    [voices, haroActive]
+    [voices]
   );
 
   const sendMessage = useCallback(
@@ -103,30 +103,29 @@ function Haro() {
     }
   }, [randomSpeakTimer]);
 
+  const rescheduleEvent = useCallback(() => {
+    cleanupEvent();
+    scheduleEvent();
+  }, [cleanupEvent, scheduleEvent]);
+
   const powerOn = useCallback(() => {
     setHaroActive(true);
+    haroActiveRef.current = true;
+    sendMessage("起動時の挨拶を言ってください。");
+    scheduleEvent();
     SpeechRecognition.startListening({
       continuous: true,
       language: "ja-JP",
     });
-  }, []);
+  }, [sendMessage, scheduleEvent]);
 
   const powerOff = useCallback(() => {
     setHaroActive(false);
+    haroActiveRef.current = false;
+    sendMessage("お休みの挨拶を言ってください。");
+    cleanupEvent();
     SpeechRecognition.stopListening();
-  }, []);
-
-  useEffect(() => {
-    if (haroActive && !prevHaroActive) {
-      setPrevHaroActive(true);
-      sendMessage("起動時の挨拶を言ってください。");
-      scheduleEvent();
-    } else if (!haroActive && prevHaroActive) {
-      setPrevHaroActive(false);
-      sendMessage("お休みの挨拶を言ってください。");
-      cleanupEvent();
-    }
-  }, [haroActive, prevHaroActive, sendMessage, scheduleEvent, cleanupEvent]);
+  }, [sendMessage, cleanupEvent]);
 
   useEffect(() => {
     if (transcript === "") return;
@@ -139,13 +138,12 @@ function Haro() {
       if (newMessage && newMessage !== lastTranscript.current) {
         lastTranscript.current = newMessage;
         sendMessage(newMessage);
-        cleanupEvent(); // Cleanup scheduled events to reset the timer.
-        scheduleEvent(); // Reschedule the event after sending a message.
+        rescheduleEvent();
         setMessages((prevMessages) => [...prevMessages, newMessage]);
         resetTranscript(); // Clear the transcript after processing
       }
     }, SILENCE_TIMEOUT);
-  }, [transcript, sendMessage, cleanupEvent, scheduleEvent, resetTranscript]);
+  }, [transcript, sendMessage, rescheduleEvent, resetTranscript]);
 
   useEffect(() => {
     console.log("Messages updated:", messages);
@@ -173,11 +171,11 @@ function Haro() {
       <div className="navigation">
         {!haroActive ? (
           <button onClick={powerOn} className="powerButton inactive">
-            <IoMdPower />
+            <IoMdPower className="powerIcon" />
           </button>
         ) : (
           <button onClick={powerOff} className="powerButton active">
-            <IoMdPower />
+            <IoMdPower className="powerIcon" />
           </button>
         )}
       </div>

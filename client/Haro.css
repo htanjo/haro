@@ -61,7 +61,7 @@
   color: #666666;
   font-size: 48px;
   cursor: pointer;
-  transition: color 0.5s;
+  transition: color 0.5s, filter 0.5s;
 }
 .powerButton:hover {
   color: #ffffff !important;
@@ -71,6 +71,9 @@
 }
 .powerButton.inactive {
   color: #666666;
+}
+.powerButton:hover .powerIcon {
+  filter: drop-shadow(0 0 6px #ffffff);
 }
 
 @keyframes activeBlink {
