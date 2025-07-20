@@ -44,9 +44,14 @@
   padding: 0;
   border: none;
   background-color: transparent;
-  color: #cccccc;
+  color: #666666;
   font-size: 48px;
   cursor: pointer;
+  transition: color 0.5s;
+}
+
+.powerButton:hover {
+  color: #a0df81;
 }
 
 /* Blink eye animation randomly.*/
