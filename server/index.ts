@@ -44,6 +44,11 @@ app.post(
       role: "user",
       parts: [{ text: content }],
     });
+    // Remove older messages to keep the context short.
+    if (historyContents.length > 10) {
+      historyContents.splice(0, historyContents.length - 10);
+    }
+    // Generate response using Gemini AI.
     const response = await ai.models.generateContent({
       model: "gemini-2.0-flash-lite",
       contents: historyContents,
