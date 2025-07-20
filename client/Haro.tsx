@@ -79,51 +79,11 @@ function Haro() {
     }
   }, []);
 
-  const powerOn = useCallback(() => {
-    setHaroActive(true);
-    SpeechRecognition.startListening({
-      continuous: true,
-      language: "ja-JP",
-    });
-  }, []);
-
-  const powerOff = useCallback(() => {
-    setHaroActive(false);
-    SpeechRecognition.stopListening();
-  }, []);
-
-  useEffect(() => {
-    if (haroActive && !prevHaroActive) {
-      setPrevHaroActive(true);
-      sendMessage("起動時の挨拶を言ってください。");
-    } else if (!haroActive && prevHaroActive) {
-      setPrevHaroActive(false);
-      sendMessage("お休みの挨拶を言ってください。");
-    }
-  }, [haroActive, prevHaroActive, sendMessage]);
-
-  useEffect(() => {
-    if (transcript === "") return;
-    // If the transcript has changed, reset the silence timer.
-    if (silenceTimer.current) {
-      clearTimeout(silenceTimer.current);
-    }
-    silenceTimer.current = setTimeout(async () => {
-      const newMessage = transcript.trim();
-      if (newMessage && newMessage !== lastTranscript.current) {
-        lastTranscript.current = newMessage;
-        sendMessage(newMessage);
-        await setMessages((prevMessages) => [...prevMessages, newMessage]);
-        resetTranscript(); // Clear the transcript after processing
-      }
-    }, SILENCE_TIMEOUT);
-  }, [transcript, sendMessage, resetTranscript]);
-
-  // Trigger a message event randomly.
-  useEffect(() => {
+  // Schedule a random message event when Haro is active.
+  const scheduleEvent = useCallback(async () => {
     const scheduleNext = () => {
-      const min = 5000; // 15 seconds
-      const max = 20000; // 60 seconds
+      const min = 15000; // 15 seconds
+      const max = 60000; // 60 seconds
       const delay = Math.floor(Math.random() * (max - min)) + min;
       const id = setTimeout(async () => {
         if (haroActive && !speaking) {
@@ -143,23 +103,60 @@ function Haro() {
       }, delay);
       setRandomSpeakTimer(id);
     };
-    // Schedule the first random message event.
-    if (haroActive && !speaking) {
-      scheduleNext();
-    }
-    // Cleanup the timer when Haro is not active.
-    if (!haroActive && randomSpeakTimer) {
+    scheduleNext();
+  }, [haroActive, speaking, sendMessage, getEvent]);
+
+  // Cleanup the random message event timer when Haro is not active or speaking.
+  const cleanupEvent = useCallback(() => {
+    if (randomSpeakTimer) {
       clearTimeout(randomSpeakTimer);
       setRandomSpeakTimer(null);
     }
-    // Cleanup the timer on unmount.
-    return () => {
-      if (randomSpeakTimer) {
-        clearTimeout(randomSpeakTimer);
+  }, [randomSpeakTimer]);
+
+  const powerOn = useCallback(() => {
+    setHaroActive(true);
+    SpeechRecognition.startListening({
+      continuous: true,
+      language: "ja-JP",
+    });
+  }, []);
+
+  const powerOff = useCallback(() => {
+    setHaroActive(false);
+    SpeechRecognition.stopListening();
+  }, []);
+
+  useEffect(() => {
+    if (haroActive && !prevHaroActive) {
+      setPrevHaroActive(true);
+      sendMessage("起動時の挨拶を言ってください。");
+      scheduleEvent();
+    } else if (!haroActive && prevHaroActive) {
+      setPrevHaroActive(false);
+      sendMessage("お休みの挨拶を言ってください。");
+      cleanupEvent();
+    }
+  }, [haroActive, prevHaroActive, sendMessage, scheduleEvent, cleanupEvent]);
+
+  useEffect(() => {
+    if (transcript === "") return;
+    // If the transcript has changed, reset the silence timer.
+    if (silenceTimer.current) {
+      clearTimeout(silenceTimer.current);
+    }
+    silenceTimer.current = setTimeout(() => {
+      const newMessage = transcript.trim();
+      if (newMessage && newMessage !== lastTranscript.current) {
+        lastTranscript.current = newMessage;
+        sendMessage(newMessage);
+        cleanupEvent(); // Cleanup scheduled events to reset the timer.
+        scheduleEvent(); // Reschedule the event after sending a message.
+        setMessages((prevMessages) => [...prevMessages, newMessage]);
+        resetTranscript(); // Clear the transcript after processing
       }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [haroActive, speaking, sendMessage]);
+    }, SILENCE_TIMEOUT);
+  }, [transcript, sendMessage, cleanupEvent, scheduleEvent, resetTranscript]);
 
   useEffect(() => {
     console.log("Messages updated:", messages);
