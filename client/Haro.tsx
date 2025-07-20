@@ -85,7 +85,7 @@ function Haro() {
       const max = 60000; // 60 seconds
       const delay = Math.floor(Math.random() * (max - min)) + min;
       const id = setTimeout(async () => {
-        if (haroActive && !speaking) {
+        if (!speaking) {
           await triggerEvent();
         }
         scheduleNext();
@@ -93,7 +93,7 @@ function Haro() {
       setRandomSpeakTimer(id);
     };
     scheduleNext();
-  }, [haroActive, speaking, triggerEvent]);
+  }, [speaking, triggerEvent]);
 
   // Cleanup the random message event timer when Haro is not active or speaking.
   const cleanupEvent = useCallback(() => {
