@@ -15,6 +15,7 @@ function Haro() {
     useSpeechRecognition();
   const [messages, setMessages] = useState<string[]>([]);
   const [haroActive, setHaroActive] = useState(false);
+  const [prevHaroActive, setPrevHaroActive] = useState(false);
   const [speaking, setSpeaking] = useState(false);
   const [randomSpeakTimer, setRandomSpeakTimer] =
     useState<NodeJS.Timeout | null>(null);
@@ -38,14 +39,16 @@ function Haro() {
       };
       utterance.onend = () => {
         setSpeaking(false);
-        SpeechRecognition.startListening({ continuous: true }); // Restart listening after speaking.
+        if (haroActive) {
+          SpeechRecognition.startListening({ continuous: true }); // Restart listening after speaking.
+        }
       };
       utterance.onerror = () => {
         setSpeaking(false);
       };
       speechSynthesis.speak(utterance);
     },
-    [voices]
+    [voices, haroActive]
   );
 
   const sendMessage = useCallback(
@@ -82,14 +85,22 @@ function Haro() {
       continuous: true,
       language: "ja-JP",
     });
-    sendMessage("起動時の挨拶を言ってください。");
-  }, [sendMessage]);
+  }, []);
 
   const powerOff = useCallback(() => {
-    sendMessage("お休みの挨拶を言ってください。");
     setHaroActive(false);
     SpeechRecognition.stopListening();
-  }, [sendMessage]);
+  }, []);
+
+  useEffect(() => {
+    if (haroActive && !prevHaroActive) {
+      setPrevHaroActive(true);
+      sendMessage("起動時の挨拶を言ってください。");
+    } else if (!haroActive && prevHaroActive) {
+      setPrevHaroActive(false);
+      sendMessage("お休みの挨拶を言ってください。");
+    }
+  }, [haroActive, prevHaroActive, sendMessage]);
 
   useEffect(() => {
     if (transcript === "") return;
