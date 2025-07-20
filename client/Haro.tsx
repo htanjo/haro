@@ -63,6 +63,19 @@ function Haro() {
     [speak]
   );
 
+  const getEvent = useCallback(async () => {
+    try {
+      const response = await axios.post("/api/event");
+      const data = response.data;
+      if (data && data.content) {
+        return data.content;
+      }
+    } catch (error) {
+      console.error("Error getting event:", error);
+      return "ハロ、何か面白いことないかな？";
+    }
+  }, []);
+
   const powerOn = useCallback(() => {
     setHaroActive(true);
     SpeechRecognition.startListening({
@@ -101,10 +114,10 @@ function Haro() {
       const min = 5000; // 5 seconds
       const max = 30000; // 30 seconds
       const delay = Math.floor(Math.random() * (max - min)) + min;
-      const id = setTimeout(() => {
+      const id = setTimeout(async () => {
         if (haroActive && !speaking) {
-          const eventContent =
-            "おや？センサーに反応があったよ？\n【指示】今回は少し長目でも構いません。50文字以内で話してください。";
+          const eventResponse = await getEvent();
+          const eventContent = `${eventResponse}\n【指示】今回は少し長目でも構いません。50文字以内で話してください。`;
           console.log("Random message event triggered:", eventContent);
           sendMessage(eventContent);
         }
