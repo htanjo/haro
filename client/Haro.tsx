@@ -2,27 +2,26 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import SpeechRecognition, {
   useSpeechRecognition,
 } from "react-speech-recognition";
+import clsx from "clsx";
 import "./Haro.css";
 import axios from "axios";
 import useVoices from "./use-voices";
+import { IoMdPower } from "react-icons/io";
 
 const SILENCE_TIMEOUT = 1000; // 2 seconds
 
 function Haro() {
-  const {
-    transcript,
-    listening,
-    resetTranscript,
-    browserSupportsSpeechRecognition,
-  } = useSpeechRecognition();
+  const { transcript, resetTranscript, browserSupportsSpeechRecognition } =
+    useSpeechRecognition();
   const [messages, setMessages] = useState<string[]>([]);
+  const [haroActive, setHaroActive] = useState(false);
+  const [speaking, setSpeaking] = useState(false);
   const silenceTimer = useRef<NodeJS.Timeout | null>(null);
   const lastTranscript = useRef<string>("");
   const voices = useVoices();
 
-  const speakMessage = useCallback(
+  const speak = useCallback(
     (content: string) => {
-      SpeechRecognition.stopListening(); // Stop listening to avoid conflicts with speech synthesis.
       const utterance = new SpeechSynthesisUtterance(content);
       utterance.lang = "ja-JP"; // Set language to Japanese
       utterance.voice =
@@ -30,9 +29,17 @@ function Haro() {
         voices.find((voice) => voice.lang === "ja-JP") ||
         voices[0]; // Fallback to the first available voice
       utterance.pitch = 2;
-      utterance.rate = 1.5;
+      utterance.rate = 1.7;
+      utterance.onstart = () => {
+        setSpeaking(true);
+        SpeechRecognition.stopListening(); // Stop listening while speaking.
+      };
       utterance.onend = () => {
+        setSpeaking(false);
         SpeechRecognition.startListening({ continuous: true }); // Restart listening after speaking.
+      };
+      utterance.onerror = () => {
+        setSpeaking(false);
       };
       speechSynthesis.speak(utterance);
     },
@@ -45,14 +52,29 @@ function Haro() {
         const response = await axios.post("/api/haro", { content });
         const data = response.data;
         if (data && data.content) {
-          speakMessage(data.content);
+          speak(data.content);
         }
       } catch (error) {
         console.error("Error sending message:", error);
       }
     },
-    [speakMessage]
+    [speak]
   );
+
+  const powerOn = useCallback(() => {
+    setHaroActive(true);
+    SpeechRecognition.startListening({
+      continuous: true,
+      language: "ja-JP",
+    });
+    sendMessage("起動時の挨拶を言ってください。");
+  }, [sendMessage]);
+
+  const powerOff = useCallback(() => {
+    sendMessage("お休みの挨拶を言ってください。");
+    setHaroActive(false);
+    SpeechRecognition.stopListening();
+  }, [sendMessage]);
 
   useEffect(() => {
     if (transcript === "") return;
@@ -85,30 +107,26 @@ function Haro() {
 
   return (
     <div className="haro">
-      <h1>Haro</h1>
-      <div>
-        {!listening ? (
-          <button
-            onClick={() =>
-              SpeechRecognition.startListening({
-                continuous: true,
-                language: "ja-JP",
-              })
-            }
-          >
-            Haroと会話する
+      <div className="haroBody">
+        <div
+          className={clsx(
+            "haroEye",
+            haroActive && "active",
+            speaking && "speaking"
+          )}
+        />
+      </div>
+      <div className="navigation">
+        {!haroActive ? (
+          <button onClick={powerOn} className="powerButton">
+            <IoMdPower />
           </button>
         ) : (
-          <button onClick={SpeechRecognition.stopListening}>
-            Haroとの会話を終了する
+          <button onClick={powerOff} className="powerButton">
+            <IoMdPower />
           </button>
         )}
       </div>
-      {/* <div>
-        {messages.map((message, index) => (
-          <div key={index}>{message}</div>
-        ))}
-      </div> */}
     </div>
   );
 }
