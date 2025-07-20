@@ -51,7 +51,15 @@
 }
 
 .powerButton:hover {
+  color: #ffffff !important;
+}
+
+.powerButton.active {
   color: #a0df81;
+}
+
+.powerButton.inactive {
+  color: #666666;
 }
 
 /* Blink eye animation randomly.*/

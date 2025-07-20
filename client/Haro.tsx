@@ -179,11 +179,11 @@ function Haro() {
       </div>
       <div className="navigation">
         {!haroActive ? (
-          <button onClick={powerOn} className="powerButton">
+          <button onClick={powerOn} className="powerButton inactive">
             <IoMdPower />
           </button>
         ) : (
-          <button onClick={powerOff} className="powerButton">
+          <button onClick={powerOff} className="powerButton active">
             <IoMdPower />
           </button>
         )}
