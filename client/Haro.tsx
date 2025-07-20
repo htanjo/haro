@@ -16,6 +16,8 @@ function Haro() {
   const [messages, setMessages] = useState<string[]>([]);
   const [haroActive, setHaroActive] = useState(false);
   const [speaking, setSpeaking] = useState(false);
+  const [randomSpeakTimer, setRandomSpeakTimer] =
+    useState<NodeJS.Timeout | null>(null);
   const silenceTimer = useRef<NodeJS.Timeout | null>(null);
   const lastTranscript = useRef<string>("");
   const voices = useVoices();
@@ -92,6 +94,41 @@ function Haro() {
       }
     }, SILENCE_TIMEOUT);
   }, [transcript, sendMessage, resetTranscript]);
+
+  // Trigger a message event randomly.
+  useEffect(() => {
+    const scheduleNext = () => {
+      const min = 5000; // 5 seconds
+      const max = 30000; // 30 seconds
+      const delay = Math.floor(Math.random() * (max - min)) + min;
+      const id = setTimeout(() => {
+        if (haroActive && !speaking) {
+          const eventContent =
+            "おや？センサーに反応があったよ？\n【指示】今回は少し長目でも構いません。50文字以内で話してください。";
+          console.log("Random message event triggered:", eventContent);
+          sendMessage(eventContent);
+        }
+        scheduleNext();
+      }, delay);
+      setRandomSpeakTimer(id);
+    };
+    // Schedule the first random message event.
+    if (haroActive && !speaking) {
+      scheduleNext();
+    }
+    // Cleanup the timer when Haro is not active.
+    if (!haroActive && randomSpeakTimer) {
+      clearTimeout(randomSpeakTimer);
+      setRandomSpeakTimer(null);
+    }
+    // Cleanup the timer on unmount.
+    return () => {
+      if (randomSpeakTimer) {
+        clearTimeout(randomSpeakTimer);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [haroActive, speaking, sendMessage]);
 
   useEffect(() => {
     console.log("Messages updated:", messages);
