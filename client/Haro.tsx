@@ -28,11 +28,13 @@ function Haro() {
       const utterance = new SpeechSynthesisUtterance(content);
       utterance.lang = "ja-JP"; // Set language to Japanese
       utterance.voice =
-        voices.find((voice) => voice.name.includes("Microsoft Sayaka")) ||
+        voices.find(
+          (voice) => voice.lang === "ja-JP" && voice.name.includes("Google")
+        ) ||
         voices.find((voice) => voice.lang === "ja-JP") ||
         voices[0]; // Fallback to the first available voice
-      utterance.pitch = 2;
-      utterance.rate = 1.7;
+      utterance.pitch = 1;
+      utterance.rate = 1.2;
       utterance.onstart = () => {
         setSpeaking(true);
         SpeechRecognition.stopListening(); // Stop listening while speaking.
