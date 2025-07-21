@@ -13,6 +13,7 @@
     "build:server": "rimraf server-dist && tsc --build server --verbose",
     "build:client": "vite build",
     "start": "cross-env NODE_ENV=production node server-dist/index.js",
+    "deploy": "pm2 deploy ecosystem.config.js production",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -43,6 +44,7 @@
     "local-ssl-proxy": "^2.0.5",
     "nodemon": "^3.1.10",
     "npm-run-all": "^4.1.5",
+    "pm2": "^6.0.8",
     "rimraf": "^6.0.1",
     "ts-node": "^10.9.2",
     "typescript": "~5.8.3",

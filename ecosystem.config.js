@@ -1,0 +1,24 @@
+const dotenv = require("dotenv");
+dotenv.config();
+
+module.exports = {
+  apps: [
+    {
+      name: "haro",
+      script: "server-dist/index.js",
+    },
+  ],
+  deploy: {
+    production: {
+      user: process.env.PROD_USER,
+      host: process.env.PROD_HOST,
+      ref: "origin/master", // Necessary even if you don't use Git. Stub value.
+      repo: "", // Disable Git deployment.
+      path: process.env.PROD_PATH,
+      "post-deploy":
+        "npm install && npm run build && pm2 restart ecosystem.config.js --env production",
+      ssh_options: ["StrictHostKeyChecking=no"],
+      copy: "true", // Copy files from local to remote server.
+    },
+  },
+};
