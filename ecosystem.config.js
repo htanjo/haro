@@ -16,7 +16,7 @@ module.exports = {
       // repo: "", // Disable Git deployment.
       path: process.env.PROD_PATH,
       ssh_options: ["StrictHostKeyChecking=no"],
-      copy: "true", // Copy files from local to remote server.
+      copy: true, // Copy files from local to remote server.
       "pre-deploy-local": "npm install && npm run build",
       "post-deploy": "pm2 restart ecosystem.config.js --env production",
     },
