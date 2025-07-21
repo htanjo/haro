@@ -11,12 +11,8 @@ import { IoMdPower } from "react-icons/io";
 const SILENCE_TIMEOUT = 1000; // 2 seconds
 
 function Haro() {
-  const {
-    transcript,
-    listening,
-    resetTranscript,
-    browserSupportsSpeechRecognition,
-  } = useSpeechRecognition();
+  const { transcript, resetTranscript, browserSupportsSpeechRecognition } =
+    useSpeechRecognition();
   const [messages, setMessages] = useState<string[]>([]);
   const [haroActive, setHaroActive] = useState(false);
   const [speaking, setSpeaking] = useState(false);
