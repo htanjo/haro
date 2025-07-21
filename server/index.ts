@@ -1,16 +1,24 @@
-import * as express from "express";
-import * as asyncHandler from "express-async-handler";
-import * as dotenv from "dotenv";
+import https from "https";
+import fs from "fs";
+import express from "express";
+import asyncHandler from "express-async-handler";
+import dotenv from "dotenv";
 import { Content, GoogleGenAI } from "@google/genai";
 
 dotenv.config();
 
 const app = express();
-const port = 3000;
+const port = process.env.NODE_ENV === "production" ? 8686 : 3000;
+
+const credentials = {
+  key: fs.readFileSync("ssl/key.pem"),
+  cert: fs.readFileSync("ssl/cert.pem"),
+};
+
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
 });
-const geminiModel = "gemini-2.0-flash-lite";
+const geminiModel = "gemini-2.5-flash-lite-preview-06-17";
 const historyContents: Content[] = [
   {
     role: "user",
@@ -43,7 +51,7 @@ app.use(express.json());
 
 app.post(
   "/api/haro",
-  asyncHandler(async (req: express.Request, res: express.Response) => {
+  asyncHandler(async (req, res) => {
     const { content } = req.body;
     historyContents.push({
       role: "user",
@@ -75,7 +83,7 @@ app.post(
 
 app.post(
   "/api/event",
-  asyncHandler(async (req: express.Request, res: express.Response) => {
+  asyncHandler(async (_req, res) => {
     let responseText: string = "";
     try {
       // Remove older events to keep the context short.
@@ -140,6 +148,13 @@ app.post(
   })
 );
 
-app.listen(port, () => {
-  console.log(`Express server is running at http://localhost:${port}`);
-});
+if (process.env.NODE_ENV === "production") {
+  app.use(express.static("server-dist/public"));
+  https.createServer(credentials, app).listen(port, () => {
+    console.log(`HTTPS server is running at https://localhost:${port}`);
+  });
+} else {
+  app.listen(port, () => {
+    console.log(`HTTP server is running at http://localhost:${port}`);
+  });
+}
