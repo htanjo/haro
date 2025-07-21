@@ -91,19 +91,18 @@ function Haro() {
 
   // Schedule a random message event when Haro is active.
   const scheduleEvent = useCallback(async () => {
-    const scheduleNext = () => {
-      const min = 15000; // 15 seconds
-      const max = 60000; // 60 seconds
-      const delay = Math.floor(Math.random() * (max - min)) + min;
-      const id = setTimeout(async () => {
-        if (!speaking) {
-          await triggerEvent();
-        }
-        scheduleNext();
-      }, delay);
-      setRandomSpeakTimer(id);
-    };
-    scheduleNext();
+    const min = 10000; // 15 seconds
+    const max = 12000; // 60 seconds
+    const delay = Math.floor(Math.random() * (max - min)) + min;
+    const id = setTimeout(async () => {
+      if (!speaking) {
+        await triggerEvent();
+      }
+      if (haroActiveRef.current) {
+        scheduleEvent();
+      }
+    }, delay);
+    setRandomSpeakTimer(id);
   }, [speaking, triggerEvent]);
 
   // Cleanup the random message event timer when Haro is not active or speaking.
