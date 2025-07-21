@@ -22,7 +22,6 @@ module.exports = {
       ssh_options: ["StrictHostKeyChecking=no"],
       "pre-deploy-local": `scp .env ${user}@${host}:${path}/shared/.env`,
       "post-deploy": [
-        "cd current",
         "ln -sf ../shared/.env .env",
         "npm install",
         "npm run build",
