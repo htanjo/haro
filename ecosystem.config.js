@@ -13,7 +13,7 @@ module.exports = {
       user: process.env.PROD_USER,
       host: process.env.PROD_HOST,
       ref: "origin/master", // Necessary even if you don't use Git. Stub value.
-      // repo: "", // Disable Git deployment.
+      repo: "noop", // Necessary for PM2 deploy, but we won't use Git deployment.
       path: process.env.PROD_PATH,
       ssh_options: ["StrictHostKeyChecking=no"],
       copy: true, // Copy files from local to remote server.
