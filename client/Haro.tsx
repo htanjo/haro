@@ -91,8 +91,8 @@ function Haro() {
 
   // Schedule a random message event when Haro is active.
   const scheduleEvent = useCallback(async () => {
-    const min = 10000; // 15 seconds
-    const max = 12000; // 60 seconds
+    const min = 15000; // 15 seconds
+    const max = 60000; // 60 seconds
     const delay = Math.floor(Math.random() * (max - min)) + min;
     const id = setTimeout(async () => {
       if (!speaking) {
