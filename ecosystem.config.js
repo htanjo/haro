@@ -13,12 +13,12 @@ module.exports = {
       user: process.env.PROD_USER,
       host: process.env.PROD_HOST,
       ref: "origin/master", // Necessary even if you don't use Git. Stub value.
-      repo: "", // Disable Git deployment.
+      // repo: "", // Disable Git deployment.
       path: process.env.PROD_PATH,
-      "post-deploy":
-        "npm install && npm run build && pm2 restart ecosystem.config.js --env production",
       ssh_options: ["StrictHostKeyChecking=no"],
       copy: "true", // Copy files from local to remote server.
+      "pre-deploy-local": "npm install && npm run build",
+      "post-deploy": "pm2 restart ecosystem.config.js --env production",
     },
   },
 };
