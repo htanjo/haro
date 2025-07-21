@@ -57,6 +57,7 @@ function Haro() {
         setSpeaking(false);
       };
       speechSynthesis.speak(utterance);
+      setMessages((prevMessages) => [...prevMessages, content]);
     },
     [voices]
   );
@@ -165,7 +166,7 @@ function Haro() {
   }, [transcript, sendMessage, rescheduleEvent, resetTranscript]);
 
   useEffect(() => {
-    console.log("Messages updated:", messages);
+    console.log(messages);
   }, [messages]);
 
   if (!browserSupportsSpeechRecognition) {
