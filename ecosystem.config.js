@@ -10,6 +10,9 @@ module.exports = {
     {
       name: "haro",
       script: "server-dist/index.js",
+      env: {
+        NODE_ENV: "production",
+      },
     },
   ],
   deploy: {
