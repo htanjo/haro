@@ -18,7 +18,7 @@ const credentials = {
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
 });
-const geminiModel = "gemini-2.5-flash-lite-preview-06-17";
+const geminiModel = "gemini-2.0-flash";
 const historyContents: Content[] = [
   {
     role: "user",
