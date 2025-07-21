@@ -170,12 +170,6 @@ function Haro() {
   }, [transcript, sendMessage, rescheduleEvent, resetTranscript]);
 
   useEffect(() => {
-    if (listening) {
-      rescheduleEvent();
-    }
-  }, [listening, rescheduleEvent]);
-
-  useEffect(() => {
     console.log(messages);
   }, [messages]);
 
