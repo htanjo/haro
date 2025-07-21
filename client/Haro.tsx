@@ -35,19 +35,19 @@ function Haro() {
         voices[0]; // Fallback to the first available voice
       utterance.pitch = 1;
       utterance.rate = 1.2;
-      utterance.onstart = () => {
+      utterance.onstart = async () => {
         setSpeaking(true);
         try {
-          SpeechRecognition.stopListening(); // Stop listening while speaking.
+          await SpeechRecognition.stopListening(); // Stop listening while speaking.
         } catch (error) {
           console.error("Error stopping speech recognition:", error);
         }
       };
-      utterance.onend = () => {
+      utterance.onend = async () => {
         setSpeaking(false);
         if (haroActiveRef.current) {
           try {
-            SpeechRecognition.startListening({ continuous: true }); // Restart listening after speaking.
+            await SpeechRecognition.startListening({ continuous: true }); // Restart listening after speaking.
           } catch (error) {
             console.error("Error restarting speech recognition:", error);
           }
@@ -118,13 +118,13 @@ function Haro() {
     scheduleEvent();
   }, [cleanupEvent, scheduleEvent]);
 
-  const powerOn = useCallback(() => {
+  const powerOn = useCallback(async () => {
     setHaroActive(true);
     haroActiveRef.current = true;
     sendMessage("起動時の挨拶を言ってください。");
     scheduleEvent();
     try {
-      SpeechRecognition.startListening({
+      await SpeechRecognition.startListening({
         continuous: true,
         language: "ja-JP",
       });
@@ -134,13 +134,13 @@ function Haro() {
     }
   }, [sendMessage, scheduleEvent]);
 
-  const powerOff = useCallback(() => {
+  const powerOff = useCallback(async () => {
     setHaroActive(false);
     haroActiveRef.current = false;
     sendMessage("お休みの挨拶を言ってください。");
     cleanupEvent();
     try {
-      SpeechRecognition.stopListening();
+      await SpeechRecognition.stopListening();
     } catch (error) {
       console.error("Error stopping speech recognition:", error);
     }
