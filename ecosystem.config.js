@@ -1,6 +1,10 @@
 const dotenv = require("dotenv");
 dotenv.config();
 
+const user = process.env.PROD_USER;
+const host = process.env.PROD_HOST;
+const path = process.env.PROD_PATH;
+
 module.exports = {
   apps: [
     {
@@ -10,15 +14,20 @@ module.exports = {
   ],
   deploy: {
     production: {
-      user: process.env.PROD_USER,
-      host: process.env.PROD_HOST,
+      user,
+      host,
       ref: "origin/master", // Necessary even if you don't use Git. Stub value.
-      repo: "noop", // Necessary for PM2 deploy, but we won't use Git deployment.
-      path: process.env.PROD_PATH,
+      repo: "git@github.com:htanjo/haro.git", // Necessary for PM2 deploy, but we won't use Git deployment.
+      path,
       ssh_options: ["StrictHostKeyChecking=no"],
-      copy: true, // Copy files from local to remote server.
-      "pre-deploy-local": "npm install && npm run build",
-      "post-deploy": "pm2 restart ecosystem.config.js --env production",
+      "pre-deploy-local": `scp .env ${user}@${host}:${path}/shared/.env`,
+      "post-deploy": [
+        "cd current",
+        "ln -sf ../shared/.env .env",
+        "npm install",
+        "npm run build",
+        "pm2 reload ecosystem.config.js --env production",
+      ].join(" && "),
     },
   },
 };
